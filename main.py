@@ -97,9 +97,9 @@ class VK:
 
 if __name__ == "__main__":
 
-    access_token = 'vk1.a.7hu1nQ5XsJOBxt-QTcdAPfoZ3zlCTdqgzzPgl11FXzV-xdT9vdfjHSc_jl4q3muiRy6Mp2LnphPKBwRtU6fJVgDKHWPX8kjeWtclTcHlBEOf3scH4E1POCoe_QCnlrh7-FVPoh1qag_GeRyQALk-hKzyc6lHHKeYe61UyjGCg86Py_Wfde1_cYrzomurGeKQ'
-    user_id = '143235225'
-    token_yandex_dick = 'y0_AgAAAABAqmI4AADLWwAAAAEEQT9fAACpwhq347ZKuKCK2HDSuT8xmbSSYA'
+    access_token = ''
+    user_id = ''
+    token_yandex_dick = ''
 
     vk = VK(access_token, user_id)
     vk.create_backup_folder(token_yandex_dick)
