@@ -1,7 +1,8 @@
 import requests
 import datetime
 import json
-from tqdm import tqdm as Bar
+from tqdm import tqdm as progressbar
+
 
 class VK:
 
@@ -18,44 +19,62 @@ class VK:
         url = 'https://api.vk.com/method/users.get'
         params = {'user_ids': self.id}
         response = requests.get(url, params={**self.params, **params})
-
         return response.json()
 
     def users_photo(self):
 
         url = 'https://api.vk.com/method/photos.get'
-        params = {'owner_id': self.id, 'album_id': 'wall', 'extended': '1', 'photo_sizes': '1', 'count': '7'}
+        params = {'owner_id': self.id, 'album_id': 'wall', 'extended': '1', 'photo_sizes': '1', 'count': '23'}
         response = requests.get(url, params={**self.params, **params})
         return response.json()
 
-    def add_backup_folder(self):
+    # Creates a folder for photos
+    @staticmethod
+    def create_backup_folder():
+
         url = 'https://cloud-api.yandex.net/v1/disk/resources'
         token = 'y0_AgAAAABAqmI4AADLWwAAAAEEQT9fAACpwhq347ZKuKCK2HDSuT8xmbSSYA'
         headers = {'Content-Type': 'application/json', 'Accept': 'application/json', 'Authorization': f'OAuth {token}'}
         params = {'path': 'Backup_Photo_BK'}
-        requests.put(url, params={**params}, headers=headers)
+        response = requests.put(url, params={**params}, headers=headers)
+        return response.json()
 
-
+    # The function uploads a photo, creates a dictionary for the 'json-file' and tracks the progress of the upload.
     def keep_photo(self, photos):
-        bank_likes = set()
+
         url = 'https://cloud-api.yandex.net/v1/disk/resources/upload'
         token = 'y0_AgAAAABAqmI4AADLWwAAAAEEQT9fAACpwhq347ZKuKCK2HDSuT8xmbSSYA'
         headers = {'Content-Type': 'application/json', 'Accept': 'application/json', 'Authorization': f'OAuth {token}'}
-        bar = Bar(total=len(photos['response']['items']), desc="Loading…", ascii=False, ncols=100)
+        bank_likes = set()
+        bar = progressbar(total=len(photos['response']['items']), desc="Loading…", ascii=False, ncols=100)
+
         for item in photos['response']['items']:
+
+            # Checking for the same number of likes
             if item['likes']['count'] in bank_likes:
                 date = datetime.datetime.fromtimestamp(int(item['date']))
                 photo_name = f'{item['likes']['count']}({date.date()}).jpg'
             else:
                 photo_name = f'{item['likes']['count']}.jpg'
                 bank_likes.add(item['likes']['count'])
+
+            # Gets the tuple of the form: (url, size_type)
             params_photo = self.best_size(item['sizes'])
+
+            # Publishing a picture on Yandex disk
             params = {'path': f'Backup_Photo_BK/{photo_name}', 'url': params_photo[0]}
             requests.post(url, params={**params}, headers=headers)
+
+            # Added file name and size in dictionary
             self.photo_json['items'].append({'file_name': photo_name, 'size': params_photo[1]})
+
+            # Progress bar update
             bar.update(1)
 
-    def best_size(self, sizes):
+    # Search for photos with maximum resolution
+    @staticmethod
+    def best_size(sizes):
+
         url = ''
         size_types = ['s', 'm', 'x', 'o', 'p', 'q', 'r', 'y', 'z', 'w']
         max_size = 0
@@ -67,20 +86,13 @@ class VK:
         return url, size_types[max_size]
 
 
-    #def photo_save_info(self,file_name, size):
-
-
-
 if __name__ == "__main__":
-    access_token = 'vk1.a.AR5-1Pp-blXdr2gR7cgtYm2OnRAtQPhPwSvvZmkGimC_M5q44CEA2q9t0IZIUO9NQPeCt1zgZLTJCFmQDio_WUFN7csw_KFtqYDCJJ-lNye_gCAL638g_SzhyFRqH1H0w18IRz6pYDhk2t-sJfaRQwYymTb44aTE_QW3iWgxkYm9BuSOl1CtpOlFqpW2DKiX'
+    access_token = ('vk1.a.AR5-1Pp-blXdr2gR7cgtYm2OnRAtQPhPwSvvZmkGimC_M5q44CEA2q9t0IZIUO9NQPeCt1zgZLTJCFmQDio_'
+                    'WUFN7csw_KFtqYDCJJ-lNye_gCAL638g_SzhyFRqH1H0w18IRz6pYDhk2t-sJfaRQwYymTb44aTE_'
+                    'QW3iWgxkYm9BuSOl1CtpOlFqpW2DKiX')
     user_id = '143235225'
     vk = VK(access_token, user_id)
-    vk.add_backup_folder()
+    vk.create_backup_folder()
     vk.keep_photo(vk.users_photo())
     file = open('BackupPhotoInfo.json', 'w', encoding='utf-8')
     file.writelines(json.dumps(vk.photo_json, ensure_ascii=False, indent=2))
-    #file =
-    #print(file)
-    #print(vk.users_info())
-    #print(vk.keep_photo(file['response']['items'][0]['sizes'][5]['url']))
-    #print(file['response']['items'][0]['sizes'][5]['url'])
