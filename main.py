@@ -1,6 +1,8 @@
 import requests
 import datetime
 import json
+from tqdm import tqdm as Bar
+
 class VK:
 
     def __init__(self, access_token, user_id, version='5.131'):
@@ -22,7 +24,7 @@ class VK:
     def users_photo(self):
 
         url = 'https://api.vk.com/method/photos.get'
-        params = {'owner_id': self.id, 'album_id': 'wall', 'extended': '1', 'photo_sizes': '1', 'count': '10'}
+        params = {'owner_id': self.id, 'album_id': 'wall', 'extended': '1', 'photo_sizes': '1', 'count': '7'}
         response = requests.get(url, params={**self.params, **params})
         return response.json()
 
@@ -35,12 +37,11 @@ class VK:
 
 
     def keep_photo(self, photos):
-
-        con = 0
         bank_likes = set()
         url = 'https://cloud-api.yandex.net/v1/disk/resources/upload'
         token = 'y0_AgAAAABAqmI4AADLWwAAAAEEQT9fAACpwhq347ZKuKCK2HDSuT8xmbSSYA'
         headers = {'Content-Type': 'application/json', 'Accept': 'application/json', 'Authorization': f'OAuth {token}'}
+        bar = Bar(total=len(photos['response']['items']), desc="Loading…", ascii=False, ncols=100)
         for item in photos['response']['items']:
             if item['likes']['count'] in bank_likes:
                 date = datetime.datetime.fromtimestamp(int(item['date']))
@@ -52,9 +53,7 @@ class VK:
             params = {'path': f'Backup_Photo_BK/{photo_name}', 'url': params_photo[0]}
             requests.post(url, params={**params}, headers=headers)
             self.photo_json['items'].append({'file_name': photo_name, 'size': params_photo[1]})
-            con += 1
-            print(f'{con}={params_photo[1]}')
-        print(self.photo_json)
+            bar.update(1)
 
     def best_size(self, sizes):
         url = ''
@@ -78,7 +77,7 @@ if __name__ == "__main__":
     vk = VK(access_token, user_id)
     vk.add_backup_folder()
     vk.keep_photo(vk.users_photo())
-    file = open('BackupPhotoInfo', 'w', encoding='utf-8')
+    file = open('BackupPhotoInfo.json', 'w', encoding='utf-8')
     file.writelines(json.dumps(vk.photo_json, ensure_ascii=False, indent=2))
     #file =
     #print(file)
