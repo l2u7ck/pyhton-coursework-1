@@ -2,6 +2,9 @@ import requests
 import datetime
 import json
 from tqdm import tqdm as progressbar
+import os
+from dotenv import load_dotenv
+from dotenv import dotenv_values
 
 
 class VK:
@@ -97,9 +100,13 @@ class VK:
 
 if __name__ == "__main__":
 
-    access_token = ''
-    user_id = ''
-    token_yandex_dick = ''
+    dotenv_path = os.path.join(os.path.dirname(__file__), '.env')
+    if os.path.exists(dotenv_path):
+        print(load_dotenv(dotenv_path))
+
+    access_token = dotenv_values()['access_token']
+    user_id = dotenv_values()['user_id']
+    token_yandex_dick = dotenv_values()['token_yandex_dick']
 
     vk = VK(access_token, user_id)
     vk.create_backup_folder(token_yandex_dick)
